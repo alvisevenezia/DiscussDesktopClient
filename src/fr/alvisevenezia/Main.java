@@ -1,14 +1,16 @@
 package fr.alvisevenezia;
 
-import fr.alvisevenezia.Utils.VERSION;
-import fr.alvisevenezia.Web.DiscussPacket.DiscussPacket;
-import fr.alvisevenezia.Web.DiscussPacket.DiscussPacketHandler;
-import fr.alvisevenezia.Web.Utils.DATAType;
+import fr.alvisevenezia.encryption.asymmetrical.AsymmetricalEncryptionMessage;
+import fr.alvisevenezia.utils.VERSION;
+import fr.alvisevenezia.web.discusspacket.DiscussPacket;
+import fr.alvisevenezia.web.discusspacket.DiscussPacketHandler;
+import fr.alvisevenezia.web.utils.DATAType;
 import fr.alvisevenezia.encryption.symmetrical.SymmetricalEncryptedMessage;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 public class Main {
 
@@ -16,7 +18,26 @@ public class Main {
 
     public static void main(String[] args) {
 
-        DiscussPacketHandler packetHandler = new DiscussPacketHandler(VERSION.BETA, DATAType.TEXT,128,0);
+
+        DiscussPacketHandler packetHandler = new DiscussPacketHandler(VERSION.BETA, DATAType.ID,1024,0);
+
+        String msg = "1,"+new String(AsymmetricalEncryptionMessage.getKeyPair().getPublic().getEncoded(), StandardCharsets.UTF_8);
+
+        packetHandler.setMessage(msg);
+
+        DiscussPacket[] discussPacket = packetHandler.createPacket();
+
+        Socket socket;
+        
+        try {
+            socket = new Socket("127.0.0.1",port);
+            packetHandler.sendDiscussPacket(socket,discussPacket);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        packetHandler.setDataType(DATAType.TEXT);
         packetHandler.setEncryptedMessage("bonjour les zouaves on fait des tests et j'ai besoin d'écrire un long message ziziziziziziziziziziiziziziiziziziiziziiz","caca");
 
         System.out.println("MSG LENGTH : "+packetHandler.getMessage().length);
@@ -31,18 +52,17 @@ public class Main {
 
         System.out.println('\n');
 
-        DiscussPacket[] discussPacket = packetHandler.createPacket();
+        discussPacket = packetHandler.createPacket();
         int i = discussPacket.length;
-        Socket socket;
 
         try {
             socket = new Socket("127.0.0.1",port);
-
             packetHandler.sendDiscussPacket(socket,discussPacket);
-
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        
 
 
         System.out.print("BYTE MSG 2 :");
